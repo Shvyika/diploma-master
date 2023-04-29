@@ -95,9 +95,9 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Uniform Probability Distribution Model
-  private uniformProbabilityDistribution() {
-    const states = this.generateUniformStates();
+  // Uniform probability distribution with random state selection model
+  private uniformDistributionModel() {
+    const states = this.getUniformStates();
     const actualState = states.find((state: State) => state.isActual);
 
     if (!actualState) {
@@ -119,18 +119,10 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
       posteriorState.id === actualState.id ? posteriorResult.wins++ : posteriorResult.loses++;
     }
 
-    console.log(priorResult);
-    console.log(posteriorResult);
-
     const priorInformationAverageProfit = this.getAverageProfit(priorResult);
     const posteriorInformationAverageProfit = this.getAverageProfit(posteriorResult);
 
-    console.log(priorInformationAverageProfit);
-    console.log(posteriorInformationAverageProfit);
-
     const informationValue = posteriorInformationAverageProfit- priorInformationAverageProfit;
-
-    console.log(informationValue);
 
     const experimentResult: ExperimentResult = {
       modelNumber: this.modelNumber,
@@ -145,21 +137,50 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
 
     this.rowData.push(experimentResult);
     this.gridApi?.setRowData(this.rowData);
-   }
+  }
 
-  private generateUniformStates(): State[] {
-    const actualConditionNumber = Math.floor(Math.random() * this.statesAmount);
+  // Non-uniform probability distribution with most probable state selection
+  private nonUniformDistributionBasicModel() {
+    // @ts-ignore
+    const weightedSample = (states: State[]) => {
+      const total = Object.values(states).reduce((sum: number, state: State) => sum + state.probability, 0);
 
-    const conditions = [];
+      const random = Math.random() * total;
+      let accumulator = 0;
 
-    for (let i = 0; i < this.statesAmount; i++) {
-      const isActual = i === actualConditionNumber;
+      for (const state of states) {
+        accumulator += state.probability;
 
-      const condition = { id: i, probability: 1 / this.statesAmount, isActual };
-      conditions.push(condition)
+        if (random < accumulator) {
+          return state;
+        }
+      }
     }
 
-    return conditions;
+    const states: State[] = [
+      { id: 1, probability: 30, isActual: false },
+      { id: 2, probability: 15, isActual: false },
+      { id: 3, probability: 10, isActual: false },
+      { id: 4, probability: 5, isActual: false },
+      { id: 5, probability: 20, isActual: false },
+      { id: 6, probability: 10, isActual: false },
+      { id: 7, probability: 5, isActual: false },
+      { id: 8, probability: 5, isActual: false },
+    ];
+
+    const result = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0, '8': 0 }
+    for (let i = 0; i < 1e6; ++i) {
+      // @ts-ignore
+      const state: State = weightedSample(states);
+
+      // @ts-ignore
+      result[String(state.id)]++;
+    }
+    console.log(result);
+  }
+  // Non-uniform probability distribution with random state selection
+  private nonUniformDistributionAdvancedModel() {
+    alert('Future functionality');
   }
 
   // Helpers methods
@@ -195,6 +216,43 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
       + this.beta * (experimentResult.loses / this.experimentsAmount);
   }
 
+  private getUniformStates(): State[] {
+    const actualConditionNumber = Math.floor(Math.random() * this.statesAmount);
+
+    const conditions = [];
+
+    for (let i = 0; i < this.statesAmount; i++) {
+      const isActual = i === actualConditionNumber;
+
+      const condition = { id: i, probability: 1 / this.statesAmount, isActual };
+      conditions.push(condition)
+    }
+
+    return conditions;
+  }
+
+  private weightedSample(states: State[]) {
+    states = states.map((state: State) => {
+      return { id: state.id, probability: state.probability * 100, isActual: false };
+    });
+
+    const total = Object.values(states).reduce((sum, state) => sum + state.probability, 0);
+
+    const rnd = Math.random() * total;
+    let accumulator = 0
+
+    for (const [item, state] of Object.entries(states)) {
+      accumulator += state.probability
+
+      if (rnd < accumulator) {
+        return item;
+      }
+    }
+
+    return;
+  }
+
+  // Buttons
   public onRunModelClick() {
     if (this.informationValueModelForm.invalid) {
       this.informationValueModelForm.markAllAsTouched();
@@ -203,21 +261,15 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
       return;
     }
 
-    console.log('Model:', this.modelNumber);
-    console.log('Alpha:', this.alpha);
-    console.log('Beta:', this.beta);
-    console.log('Amount of States:', this.statesAmount);
-    console.log('Amount of Experiments:', this.experimentsAmount);
-
     switch (this.modelNumber) {
       case 1:
-        this.uniformProbabilityDistribution();
+        this.uniformDistributionModel();
         break;
       case 2:
-        alert('Future functionality');
+        this.nonUniformDistributionBasicModel();
         break;
       case 3:
-        alert('Future functionality');
+        this.nonUniformDistributionAdvancedModel();
         break;
       default:
         break;
@@ -230,6 +282,7 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
-
+    this.unsubscribe$.complete();
+    this.unsubscribe$.next();
   }
 }

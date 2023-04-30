@@ -11,11 +11,13 @@ import { AppRoutingModule } from './app-routing.module';
 
 import { AppComponent } from './app.component';
 import { InformationValueModelComponent } from './information-value-model/information-value-model.component';
+import { PageNotFoundComponent } from './page-not-found/page-not-found.component';
 
 @NgModule({
   declarations: [
     AppComponent,
-    InformationValueModelComponent
+    InformationValueModelComponent,
+    PageNotFoundComponent
   ],
   imports: [
     BrowserModule,

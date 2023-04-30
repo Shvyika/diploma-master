@@ -116,9 +116,10 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
   }
 
   private runModel() {
+    console.log("=====");
     const states = this.modelNumber === 1 ? this.getUniformStates() : this.getNonUniformStates();
     const actualState = states.find((state: State) => state.isActual) as State;
-
+    console.log(actualState);
     const priorGuessingResult = { wins: 0, loses: 0 };
     const posteriorGuessingResult = { wins: 0, loses: 0 };
 
@@ -138,6 +139,8 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
       posteriorGuessedState.id === actualState.id ? posteriorGuessingResult.wins++ : posteriorGuessingResult.loses++;
     }
 
+    console.log(priorGuessingResult);
+    console.log(posteriorGuessingResult);
     const priorAverageProfit = this.getAverageProfit(priorGuessingResult);
     const posteriorAverageProfit = this.getAverageProfit(posteriorGuessingResult);
 
@@ -154,8 +157,9 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
       informationValue
     };
 
-    this.rowData.push(experimentResult);
+    this.rowData.unshift(experimentResult);
     this.gridApi?.setRowData(this.rowData);
+    console.log("=====");
   }
 
   // Helpers methods

@@ -24,8 +24,10 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
   private modelNumber: number = 1;
   private alpha: number = 2;
   private beta: number = 1;
-  private statesAmount: number = 100;
   private experimentsAmount: number = 1000;
+  private statesAmount: number = 100;
+  private userStatesAmount: number = 20;
+  private watcherStatesAmount: number = 20;
 
   private unsubscribe$ = new Subject<void>();
 
@@ -37,16 +39,22 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
   private initForm(): void {
     this.informationValueModelForm = new FormGroup({
       alpha: new FormControl(
-        { value: 2, disabled: false }, [Validators.required, Validators.min(0)]
+        { value: 2, disabled: false }, [Validators.required, Validators.min(1)]
       ),
       beta: new FormControl(
-        { value: 1, disabled: false }, [Validators.required, Validators.min(0)]
+        { value: 1, disabled: false }, [Validators.required, Validators.min(1)]
+      ),
+      guessingAmount: new FormControl(
+        { value: 1000, disabled: false }, [Validators.required, Validators.min(1)]
       ),
       statesAmount: new FormControl(
-        { value: 100, disabled: false }, [Validators.required, Validators.min(0)]
+        { value: 100, disabled: false }, [Validators.required, Validators.min(1)]
       ),
-      experimentsAmount: new FormControl(
-        { value: 1000, disabled: false }, [Validators.required, Validators.min(0)]
+      userStatesAmount: new FormControl(
+        { value: 20, disabled: false }, [Validators.required, Validators.min(1)]
+      ),
+      watcherStatesAmount: new FormControl(
+        { value: 20, disabled: false }, [Validators.required, Validators.min(1)]
       ),
       modelNumber: new FormControl()
     });
@@ -65,16 +73,28 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
       this.beta = beta;
     });
 
+    this.informationValueModelForm.get('guessingAmount')?.valueChanges.pipe(
+      takeUntil(this.unsubscribe$)
+    ).subscribe((experimentsAmount: number) => {
+      this.experimentsAmount = experimentsAmount;
+    });
+
     this.informationValueModelForm.get('statesAmount')?.valueChanges.pipe(
       takeUntil(this.unsubscribe$)
     ).subscribe((statesAmount: number) => {
       this.statesAmount = statesAmount;
     });
 
-    this.informationValueModelForm.get('experimentsAmount')?.valueChanges.pipe(
+    this.informationValueModelForm.get('userStatesAmount')?.valueChanges.pipe(
       takeUntil(this.unsubscribe$)
-    ).subscribe((experimentsAmount: number) => {
-      this.experimentsAmount = experimentsAmount;
+    ).subscribe((userStatesAmount: number) => {
+      this.userStatesAmount = userStatesAmount;
+    });
+
+    this.informationValueModelForm.get('watcherStatesAmount')?.valueChanges.pipe(
+      takeUntil(this.unsubscribe$)
+    ).subscribe((watcherStatesAmount: number) => {
+      this.watcherStatesAmount = watcherStatesAmount;
     });
 
     this.informationValueModelForm.get('modelNumber')?.valueChanges.pipe(
@@ -95,32 +115,31 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
     }
   }
 
-  // Uniform probability distribution with random state selection model
-  private uniformDistributionModel() {
-    const states = this.getUniformStates();
-    const actualState = states.find((state: State) => state.isActual);
+  private runModel() {
+    const states = this.modelNumber === 1 ? this.getUniformStates() : this.getNonUniformStates();
+    const actualState = states.find((state: State) => state.isActual) as State;
 
-    if (!actualState) {
-      return;
-    }
-
-    const priorResult = { wins: 0, loses: 0 };
-    const posteriorResult = { wins: 0, loses: 0 };
+    const priorGuessingResult = { wins: 0, loses: 0 };
+    const posteriorGuessingResult = { wins: 0, loses: 0 };
 
     for (let i = 0; i < this.experimentsAmount; i++) {
-      const userMessage = this.getInformationMessage(states, actualState, 20);
-      const watcherMessage = this.getInformationMessage(states, actualState, 20);
+      const userMessage = this.getInformationMessage(states, actualState, this.userStatesAmount);
+      const watcherMessage = this.getInformationMessage(states, actualState, this.watcherStatesAmount);
       const intersection = this.getMessageIntersection(userMessage, watcherMessage);
 
-      const priorState = this.getRandomStateFromMessage(userMessage);
-      priorState.id === actualState.id ? priorResult.wins++ : priorResult.loses++;
+      const priorState = this.modelNumber === 3
+        ? this.getMostProbableStateFromMessage(userMessage)
+        : this.getRandomStateFromMessage(userMessage);
+      priorState.id === actualState.id ? priorGuessingResult.wins++ : priorGuessingResult.loses++;
 
-      const posteriorState = this.getRandomStateFromMessage(intersection);
-      posteriorState.id === actualState.id ? posteriorResult.wins++ : posteriorResult.loses++;
+      const posteriorState = this.modelNumber === 3
+        ? this.getMostProbableStateFromMessage(intersection)
+        : this.getRandomStateFromMessage(intersection);
+      posteriorState.id === actualState.id ? posteriorGuessingResult.wins++ : posteriorGuessingResult.loses++;
     }
 
-    const priorInformationAverageProfit = this.getAverageProfit(priorResult);
-    const posteriorInformationAverageProfit = this.getAverageProfit(posteriorResult);
+    const priorInformationAverageProfit = this.getAverageProfit(priorGuessingResult);
+    const posteriorInformationAverageProfit = this.getAverageProfit(posteriorGuessingResult);
 
     const informationValue = posteriorInformationAverageProfit- priorInformationAverageProfit;
 
@@ -137,50 +156,6 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
 
     this.rowData.push(experimentResult);
     this.gridApi?.setRowData(this.rowData);
-  }
-
-  // Non-uniform probability distribution with most probable state selection
-  private nonUniformDistributionBasicModel() {
-    // @ts-ignore
-    const weightedSample = (states: State[]) => {
-      const total = Object.values(states).reduce((sum: number, state: State) => sum + state.probability, 0);
-
-      const random = Math.random() * total;
-      let accumulator = 0;
-
-      for (const state of states) {
-        accumulator += state.probability;
-
-        if (random < accumulator) {
-          return state;
-        }
-      }
-    }
-
-    const states: State[] = [
-      { id: 1, probability: 30, isActual: false },
-      { id: 2, probability: 15, isActual: false },
-      { id: 3, probability: 10, isActual: false },
-      { id: 4, probability: 5, isActual: false },
-      { id: 5, probability: 20, isActual: false },
-      { id: 6, probability: 10, isActual: false },
-      { id: 7, probability: 5, isActual: false },
-      { id: 8, probability: 5, isActual: false },
-    ];
-
-    const result = { '1': 0, '2': 0, '3': 0, '4': 0, '5': 0, '6': 0, '7': 0, '8': 0 }
-    for (let i = 0; i < 1e6; ++i) {
-      // @ts-ignore
-      const state: State = weightedSample(states);
-
-      // @ts-ignore
-      result[String(state.id)]++;
-    }
-    console.log(result);
-  }
-  // Non-uniform probability distribution with random state selection
-  private nonUniformDistributionAdvancedModel() {
-    alert('Future functionality');
   }
 
   // Helpers methods
@@ -211,45 +186,64 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
     return message[randomIndex];
   }
 
-  private getAverageProfit(experimentResult: { wins: number, loses: number }) {
-    return this.alpha * (experimentResult.wins / this.experimentsAmount)
-      + this.beta * (experimentResult.loses / this.experimentsAmount);
+  private getMostProbableStateFromMessage(message: State[]) {
+    const sortedArray = [...message].sort((a: State, b: State) => a.probability - b.probability);
+
+    return sortedArray[sortedArray.length - 1];
+  }
+
+  private getAverageProfit(guessingResults: { wins: number, loses: number }) {
+    return this.alpha * (guessingResults.wins / this.experimentsAmount)
+      + this.beta * (guessingResults.loses / this.experimentsAmount);
   }
 
   private getUniformStates(): State[] {
-    const actualConditionNumber = Math.floor(Math.random() * this.statesAmount);
+    const actualStateNumber = Math.floor(Math.random() * this.statesAmount);
 
-    const conditions = [];
+    const states = [];
 
-    for (let i = 0; i < this.statesAmount; i++) {
-      const isActual = i === actualConditionNumber;
+    for (let i = 1; i <= this.statesAmount; i++) {
+      const isActual = i === actualStateNumber;
 
-      const condition = { id: i, probability: 1 / this.statesAmount, isActual };
-      conditions.push(condition)
+      const state = { id: i, probability: 1 / this.statesAmount, isActual };
+      states.push(state)
     }
 
-    return conditions;
+    return states;
   }
 
-  private weightedSample(states: State[]) {
-    states = states.map((state: State) => {
-      return { id: state.id, probability: state.probability * 100, isActual: false };
-    });
+  private getNonUniformStates() {
+    const sum = (this.statesAmount * (this.statesAmount + 1)) / 2;
 
-    const total = Object.values(states).reduce((sum, state) => sum + state.probability, 0);
+    const states = [];
 
-    const rnd = Math.random() * total;
-    let accumulator = 0
+    for (let i = 1; i <= this.statesAmount; i++) {
+      const state = { id: i, probability: i / sum, isActual: false };
+      states.push(state);
+    }
 
-    for (const [item, state] of Object.entries(states)) {
-      accumulator += state.probability
+    const actualState = this.getNonUniformActualState(states);
 
-      if (rnd < accumulator) {
-        return item;
+    states[actualState.id - 1].isActual = true;
+
+    return states;
+  }
+
+  private getNonUniformActualState(states: State[]) {
+    const total = Object.values(states).reduce((sum: number, state: State) => sum + state.probability, 0);
+
+    const random = Math.random() * total;
+    let accumulator = 0;
+
+    for (const state of states) {
+      accumulator += state.probability;
+
+      if (random < accumulator) {
+        return state;
       }
     }
 
-    return;
+    return { id: 0, probability: 0, isActual: false };
   }
 
   // Buttons
@@ -261,19 +255,7 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
       return;
     }
 
-    switch (this.modelNumber) {
-      case 1:
-        this.uniformDistributionModel();
-        break;
-      case 2:
-        this.nonUniformDistributionBasicModel();
-        break;
-      case 3:
-        this.nonUniformDistributionAdvancedModel();
-        break;
-      default:
-        break;
-    }
+    this.runModel();
   }
 
   public onClearTable() {

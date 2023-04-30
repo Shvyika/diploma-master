@@ -22,7 +22,7 @@ export const columnDefs: ColDef[] = [
     valueGetter: (params) => params.data.statesAmount
   },
   {
-    headerName: 'Amount of Experiments',
+    headerName: `Amount of 'Guessing'`,
     field: 'experimentsAmount',
     valueGetter: (params) => params.data.experimentsAmount
   },

@@ -3,8 +3,8 @@ export interface ExperimentResult {
   alpha: number;
   beta: number;
   statesAmount: number;
-  experimentsAmount: number;
-  priorProfit: number;
-  posteriorProfit: number;
+  guessingAmount: number;
+  priorAverageProfit: number;
+  posteriorAverageProfit: number;
   informationValue: number;
 }

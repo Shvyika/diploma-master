@@ -24,7 +24,7 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
   private modelNumber: number = 1;
   private alpha: number = 2;
   private beta: number = 1;
-  private experimentsAmount: number = 1000;
+  private guessingAmount: number = 1000;
   private statesAmount: number = 100;
   private userStatesAmount: number = 20;
   private watcherStatesAmount: number = 20;
@@ -38,6 +38,7 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
 
   private initForm(): void {
     this.informationValueModelForm = new FormGroup({
+      modelNumber: new FormControl(),
       alpha: new FormControl(
         { value: 2, disabled: false }, [Validators.required, Validators.min(1)]
       ),
@@ -55,12 +56,17 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
       ),
       watcherStatesAmount: new FormControl(
         { value: 20, disabled: false }, [Validators.required, Validators.min(1)]
-      ),
-      modelNumber: new FormControl()
+      )
     });
   }
 
   private addSubscriptions(): void {
+    this.informationValueModelForm.get('modelNumber')?.valueChanges.pipe(
+      takeUntil(this.unsubscribe$)
+    ).subscribe((modelNumber: number) => {
+      this.modelNumber = modelNumber
+    });
+
     this.informationValueModelForm.get('alpha')?.valueChanges.pipe(
       takeUntil(this.unsubscribe$)
     ).subscribe((alpha: number) => {
@@ -75,8 +81,8 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
 
     this.informationValueModelForm.get('guessingAmount')?.valueChanges.pipe(
       takeUntil(this.unsubscribe$)
-    ).subscribe((experimentsAmount: number) => {
-      this.experimentsAmount = experimentsAmount;
+    ).subscribe((guessingAmount: number) => {
+      this.guessingAmount = guessingAmount;
     });
 
     this.informationValueModelForm.get('statesAmount')?.valueChanges.pipe(
@@ -95,12 +101,6 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
       takeUntil(this.unsubscribe$)
     ).subscribe((watcherStatesAmount: number) => {
       this.watcherStatesAmount = watcherStatesAmount;
-    });
-
-    this.informationValueModelForm.get('modelNumber')?.valueChanges.pipe(
-      takeUntil(this.unsubscribe$)
-    ).subscribe((modelNumber: number) => {
-      this.modelNumber = modelNumber
     });
   }
 
@@ -122,35 +122,35 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
     const priorGuessingResult = { wins: 0, loses: 0 };
     const posteriorGuessingResult = { wins: 0, loses: 0 };
 
-    for (let i = 0; i < this.experimentsAmount; i++) {
-      const userMessage = this.getInformationMessage(states, actualState, this.userStatesAmount);
-      const watcherMessage = this.getInformationMessage(states, actualState, this.watcherStatesAmount);
-      const intersection = this.getMessageIntersection(userMessage, watcherMessage);
+    for (let i = 0; i < this.guessingAmount; i++) {
+      const userMessage = this.getMessage(states, actualState, this.userStatesAmount);
+      const watcherMessage = this.getMessage(states, actualState, this.watcherStatesAmount);
+      const intersection = this.getMessagesIntersection(userMessage, watcherMessage);
 
-      const priorState = this.modelNumber === 3
+      const priorGuessedState = this.modelNumber === 3
         ? this.getMostProbableStateFromMessage(userMessage)
         : this.getRandomStateFromMessage(userMessage);
-      priorState.id === actualState.id ? priorGuessingResult.wins++ : priorGuessingResult.loses++;
+      priorGuessedState.id === actualState.id ? priorGuessingResult.wins++ : priorGuessingResult.loses++;
 
-      const posteriorState = this.modelNumber === 3
+      const posteriorGuessedState = this.modelNumber === 3
         ? this.getMostProbableStateFromMessage(intersection)
         : this.getRandomStateFromMessage(intersection);
-      posteriorState.id === actualState.id ? posteriorGuessingResult.wins++ : posteriorGuessingResult.loses++;
+      posteriorGuessedState.id === actualState.id ? posteriorGuessingResult.wins++ : posteriorGuessingResult.loses++;
     }
 
-    const priorInformationAverageProfit = this.getAverageProfit(priorGuessingResult);
-    const posteriorInformationAverageProfit = this.getAverageProfit(posteriorGuessingResult);
+    const priorAverageProfit = this.getAverageProfit(priorGuessingResult);
+    const posteriorAverageProfit = this.getAverageProfit(posteriorGuessingResult);
 
-    const informationValue = posteriorInformationAverageProfit- priorInformationAverageProfit;
+    const informationValue = posteriorAverageProfit - priorAverageProfit;
 
     const experimentResult: ExperimentResult = {
       modelNumber: this.modelNumber,
       alpha: this.alpha,
       beta: this.beta,
       statesAmount: this.statesAmount,
-      experimentsAmount: this.experimentsAmount,
-      priorProfit: priorInformationAverageProfit,
-      posteriorProfit: posteriorInformationAverageProfit,
+      guessingAmount: this.guessingAmount,
+      priorAverageProfit,
+      posteriorAverageProfit,
       informationValue
     };
 
@@ -159,54 +159,14 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
   }
 
   // Helpers methods
-  private getInformationMessage(array: State[], actualState: State, statesAmount: number) {
-    const filteredArray = array.filter((state: State) => !state.isActual);
-    const shuffledArray = [...filteredArray].sort(() => 0.5 - Math.random());
-
-    return [...shuffledArray.slice(0, statesAmount - 1), actualState].sort(() => 0.5 - Math.random());
-  }
-
-  private getMessageIntersection(userMessage: State[], watcherMessage: State[]) {
-    const intersection: State[] = [];
-
-    userMessage.forEach((priorState: State) => {
-      watcherMessage.forEach((posteriorState: State) => {
-        if (priorState.id === posteriorState.id) {
-          intersection.push(posteriorState);
-        }
-      });
-    });
-
-    return intersection;
-  }
-
-  private getRandomStateFromMessage(message: State[]) {
-    const randomIndex = Math.floor(Math.random() * message.length);
-
-    return message[randomIndex];
-  }
-
-  private getMostProbableStateFromMessage(message: State[]) {
-    const sortedArray = [...message].sort((a: State, b: State) => a.probability - b.probability);
-
-    return sortedArray[sortedArray.length - 1];
-  }
-
-  private getAverageProfit(guessingResults: { wins: number, loses: number }) {
-    return this.alpha * (guessingResults.wins / this.experimentsAmount)
-      + this.beta * (guessingResults.loses / this.experimentsAmount);
-  }
-
   private getUniformStates(): State[] {
-    const actualStateNumber = Math.floor(Math.random() * this.statesAmount);
+    const actualStateId = Math.floor(Math.random() * this.statesAmount) + 1;
 
     const states = [];
 
     for (let i = 1; i <= this.statesAmount; i++) {
-      const isActual = i === actualStateNumber;
-
-      const state = { id: i, probability: 1 / this.statesAmount, isActual };
-      states.push(state)
+      const state = { id: i, probability: 1 / this.statesAmount, isActual: i === actualStateId};
+      states.push(state);
     }
 
     return states;
@@ -223,7 +183,6 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
     }
 
     const actualState = this.getNonUniformActualState(states);
-
     states[actualState.id - 1].isActual = true;
 
     return states;
@@ -244,6 +203,44 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
     }
 
     return { id: 0, probability: 0, isActual: false };
+  }
+
+  private getMessage(states: State[], actualState: State, statesAmount: number) {
+    const filteredArray = [...states].filter((state: State) => !state.isActual);
+    const shuffledArray = [...filteredArray].sort(() => 0.5 - Math.random());
+
+    return [...shuffledArray.slice(0, statesAmount - 1), actualState].sort(() => 0.5 - Math.random());
+  }
+
+  private getMessagesIntersection(userMessage: State[], watcherMessage: State[]) {
+    const intersection: State[] = [];
+
+    userMessage.forEach((priorState: State) => {
+      watcherMessage.forEach((posteriorState: State) => {
+        if (priorState.id === posteriorState.id) {
+          intersection.push(posteriorState);
+        }
+      });
+    });
+
+    return intersection;
+  }
+
+  private getRandomStateFromMessage(message: State[]) {
+    const randomStateNumber = Math.floor(Math.random() * message.length);
+
+    return message[randomStateNumber];
+  }
+
+  private getMostProbableStateFromMessage(message: State[]) {
+    const sortedArray = [...message].sort((a: State, b: State) => a.probability - b.probability);
+
+    return sortedArray[sortedArray.length - 1];
+  }
+
+  private getAverageProfit(guessingResults: { wins: number, loses: number }) {
+    return this.alpha * (guessingResults.wins / this.guessingAmount)
+      + this.beta * (guessingResults.loses / this.guessingAmount);
   }
 
   // Buttons

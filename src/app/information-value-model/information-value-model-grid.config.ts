@@ -24,17 +24,17 @@ export const columnDefs: ColDef[] = [
   {
     headerName: `Amount of 'Guessing'`,
     field: 'experimentsAmount',
-    valueGetter: (params) => params.data.experimentsAmount
+    valueGetter: (params) => params.data.guessingAmount
   },
   {
     headerName: 'Prior Profit',
     field: 'priorProfit',
-    valueGetter: (params) => params.data.priorProfit
+    valueGetter: (params) => params.data.priorAverageProfit
   },
   {
     headerName: 'Posterior Profit',
     field: 'posteriorProfit',
-    valueGetter: (params) => params.data.posteriorProfit
+    valueGetter: (params) => params.data.posteriorAverageProfit
   },
   {
     headerName: 'Information Value',
@@ -46,5 +46,5 @@ export const columnDefs: ColDef[] = [
 export const defaultColDef: ColDef = {
   sortable: true,
   filter: true,
-  minWidth: 80
+  minWidth: 100
 };

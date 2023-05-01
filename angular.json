@@ -33,7 +33,7 @@
               "@angular/material/prebuilt-themes/indigo-pink.css",
               "bootstrap/dist/css/bootstrap.css",
               "ag-grid-community/styles/ag-grid.css",
-              "ag-grid-community/styles/ag-theme-alpine.css",
+              "ag-grid-community/styles/ag-theme-balham.css",
               "src/styles.scss"
             ],
             "scripts": []
@@ -98,6 +98,9 @@
             ],
             "styles": [
               "@angular/material/prebuilt-themes/indigo-pink.css",
+              "bootstrap/dist/css/bootstrap.css",
+              "ag-grid-community/styles/ag-grid.css",
+              "ag-grid-community/styles/ag-theme-balham.css",
               "src/styles.scss"
             ],
             "scripts": []

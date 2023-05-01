@@ -32,6 +32,7 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
   private statesAmount: number = 100;
   private userStatesAmount: number = 20;
   private watcherStatesAmount: number = 20;
+  private statesPercent: number = 25;
 
   private unsubscribe$ = new Subject<void>();
 
@@ -49,22 +50,32 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
         { value: 2, disabled: false }, [Validators.required, Validators.min(1)]
       ),
       beta: new FormControl(
-        { value: 1, disabled: false }, [Validators.required, Validators.min(1)]
+        { value: 1, disabled: false },
+        [Validators.required, Validators.min(1)]
       ),
       guessingAmount: new FormControl(
-        { value: 100, disabled: false }, [Validators.required, Validators.min(1)]
+        { value: 100, disabled: false },
+        [Validators.required, Validators.min(1), Validators.max(1000)]
       ),
       experimentsAmount: new FormControl(
-        { value: 100, disabled: false }, [Validators.required, Validators.min(1)]
+        { value: 100, disabled: false },
+        [Validators.required, Validators.min(1), Validators.max(1000)]
       ),
       statesAmount: new FormControl(
-        { value: 100, disabled: false }, [Validators.required, Validators.min(1)]
+        { value: 100, disabled: false },
+        [Validators.required, Validators.min(1)]
       ),
       userStatesAmount: new FormControl(
-        { value: 20, disabled: false }, [Validators.required, Validators.min(1)]
+        { value: 20, disabled: false },
+        [Validators.required, Validators.min(1)]
       ),
       watcherStatesAmount: new FormControl(
-        { value: 20, disabled: false }, [Validators.required, Validators.min(1)]
+        { value: 20, disabled: false },
+        [Validators.required, Validators.min(1)]
+      ),
+      statesPercent: new FormControl(
+        { value: 25, disabled: true },
+        [Validators.required, Validators.min(1), Validators.max(100)]
       )
     });
   }
@@ -73,7 +84,11 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
     this.informationValueModelForm.get('modelNumber')?.valueChanges.pipe(
       takeUntil(this.unsubscribe$)
     ).subscribe((modelNumber: number) => {
-      this.modelNumber = modelNumber
+      this.modelNumber = modelNumber;
+
+      this.modelNumber === 4
+        ? this.informationValueModelForm.get('statesPercent')?.enable()
+        : this.informationValueModelForm.get('statesPercent')?.disable();
     });
 
     this.informationValueModelForm.get('alpha')?.valueChanges.pipe(
@@ -116,6 +131,12 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
       takeUntil(this.unsubscribe$)
     ).subscribe((watcherStatesAmount: number) => {
       this.watcherStatesAmount = watcherStatesAmount;
+    });
+
+    this.informationValueModelForm.get('statesPercent')?.valueChanges.pipe(
+      takeUntil(this.unsubscribe$)
+    ).subscribe((statesPercent: number) => {
+      this.statesPercent = statesPercent;
     });
   }
 
@@ -282,7 +303,7 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
   private getRandomStateFromMostProbableSubMessage(message: State[]) {
     const mostProbableSubMessage = message
       .sort((a: State, b: State) => b.probability - a.probability)
-      .slice(0, Math.ceil(message.length / 4));
+      .slice(0, Math.ceil(message.length * (this.statesPercent / 100)));
 
     return this.getRandomStateFromMessage(mostProbableSubMessage);
   }
@@ -294,7 +315,6 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
 
   // Buttons
   public onRunModelClick() {
-
     if (this.informationValueModelForm.invalid) {
       this.informationValueModelForm.markAllAsTouched();
       this.informationValueModelForm.markAsDirty();

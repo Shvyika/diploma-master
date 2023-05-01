@@ -8,17 +8,13 @@ import { MatRadioModule } from '@angular/material/radio';
 import { AgGridModule } from 'ag-grid-angular';
 
 import { AppRoutingModule } from './app-routing.module';
+import { SharedModule } from './shared/shared.module';
 
 import { AppComponent } from './app.component';
 import { InformationValueModelComponent } from './information-value-model/information-value-model.component';
 import { PageNotFoundComponent } from './page-not-found/page-not-found.component';
 
 @NgModule({
-  declarations: [
-    AppComponent,
-    InformationValueModelComponent,
-    PageNotFoundComponent
-  ],
   imports: [
     BrowserModule,
     AppRoutingModule,
@@ -27,7 +23,13 @@ import { PageNotFoundComponent } from './page-not-found/page-not-found.component
     MatInputModule,
     MatButtonModule,
     MatRadioModule,
-    AgGridModule
+    AgGridModule,
+    SharedModule
+  ],
+  declarations: [
+    AppComponent,
+    InformationValueModelComponent,
+    PageNotFoundComponent,
   ],
   providers: [],
   bootstrap: [AppComponent]

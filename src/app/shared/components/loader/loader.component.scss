@@ -1,0 +1,80 @@
+@mixin shadow($args...) {
+  -webkit-box-shadow: $args;
+  box-shadow: $args;
+}
+
+@mixin animation($args...) {
+  -webkit-animation: $args;
+  animation: $args;
+}
+
+@mixin fullWidthMinusSideMenu($padding: 0px) {
+  width: 100%;
+  @include media-breakpoint-up(lg) {
+    :host-context(.open-navbar-left.navbar-left-compressed) & {
+      width: calc(100% - 60px - #{$padding});
+    }
+  }
+  :host-context(.open-navbar-left:not(.navbar-left-compressed)) & {
+    width: calc(100% - 242px - #{$padding});
+  }
+}
+
+@-webkit-keyframes spin {
+  0% {
+    -webkit-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+  100% {
+    -webkit-transform: rotate(360deg);
+    transform: rotate(360deg);
+  }
+}
+
+@keyframes spin {
+  0% {
+    -webkit-transform: rotate(0deg);
+    transform: rotate(0deg);
+  }
+  100% {
+    -webkit-transform: rotate(360deg);
+    transform: rotate(360deg);
+  }
+}
+
+$width: 32px;
+$top: calc(50% - #{$width}/2);
+$left: calc(50% - #{$width}/2);
+
+.loading-wrapper{
+  position: absolute;
+  z-index: 997;
+  height: 100%;
+  width: 100%;
+  margin: auto;
+  top: 0;
+  left: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.05);
+  right: 0;
+
+  img {
+    position: absolute;
+    top: $top;
+    left: $left;
+    margin-left: 3px;
+    margin-top: 3px;
+  }
+}
+
+.loading {
+  position: absolute;
+  top: $top;
+  left: $left;
+  width: $width;
+  height: $width;
+  border-radius: 50%;
+  border: 0.2rem solid blue;
+  border-top-color: white;
+  @include animation(spin 1s infinite linear);
+}

@@ -7,6 +7,7 @@ import { State } from '../shared/entities/condition.interface';
 import { ExperimentResult } from '../shared/entities/experiment-result.interface';
 
 import { columnDefs, defaultColDef } from './information-value-model-grid.config';
+import { LoaderService } from '../shared/services/loader.service';
 
 @Component({
   selector: 'app-information-value-model',
@@ -14,6 +15,8 @@ import { columnDefs, defaultColDef } from './information-value-model-grid.config
   styleUrls: ['./information-value-model.component.scss']
 })
 export class InformationValueModelComponent implements OnInit, OnDestroy {
+  private EMPTY_STATE: State = { id: 0, probability: 0 };
+
   public informationValueModelForm: FormGroup = new FormGroup({});
 
   private gridApi: GridApi | undefined;
@@ -31,6 +34,8 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
   private watcherStatesAmount: number = 20;
 
   private unsubscribe$ = new Subject<void>();
+
+  constructor(private loaderService: LoaderService) { }
 
   ngOnInit(): void {
     this.initForm();
@@ -125,6 +130,31 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
     }
   }
 
+  private runModel(states: State[]) {
+    const actualState = this.modelNumber === 1 ? this.getUniformActualState(states) : this.getNonUniformActualState(states);
+
+    const priorGuessingResult = { wins: 0, loses: 0 };
+    const posteriorGuessingResult = { wins: 0, loses: 0 };
+
+    for (let i = 0; i < this.guessingAmount; i++) {
+      const userMessage = this.getMessage(states, actualState, this.userStatesAmount);
+      const watcherMessage = this.getMessage(states, actualState, this.watcherStatesAmount);
+      const intersection = this.getMessagesIntersection(userMessage, watcherMessage);
+
+      const priorGuessedState = this.getGuessedState(userMessage);
+      priorGuessedState.id === actualState.id ? priorGuessingResult.wins++ : priorGuessingResult.loses++;
+
+      const posteriorGuessedState = this.getGuessedState(intersection);
+      posteriorGuessedState.id === actualState.id ? posteriorGuessingResult.wins++ : posteriorGuessingResult.loses++;
+    }
+
+    const priorProfit = this.getAverageProfit(priorGuessingResult);
+    const posteriorProfit = this.getAverageProfit(posteriorGuessingResult);
+    const informationValue = posteriorProfit - priorProfit;
+
+    return { priorProfit, posteriorProfit, informationValue };
+  }
+
   private runExperiment() {
     const states = this.modelNumber === 1 ? this.getUniformStates() : this.getNonUniformStates();
 
@@ -133,33 +163,11 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
     const informationValues = [];
 
     for (let i = 0; i < this.experimentsAmount; i++) {
-      const actualState = this.modelNumber === 1 ? this.getUniformActualState(states) : this.getNonUniformActualState(states);
-      const priorGuessingResult = { wins: 0, loses: 0 };
-      const posteriorGuessingResult = { wins: 0, loses: 0 };
+      const modelResult = this.runModel(states);
 
-      for (let j = 0; j < this.guessingAmount; j++) {
-        const userMessage = this.getMessage(states, actualState, this.userStatesAmount);
-        const watcherMessage = this.getMessage(states, actualState, this.watcherStatesAmount);
-        const intersection = this.getMessagesIntersection(userMessage, watcherMessage);
-
-        const priorGuessedState = this.modelNumber === 3
-          ? this.getMostProbableStateFromMessage(userMessage)
-          : this.getRandomStateFromMessage(userMessage);
-        priorGuessedState.id === actualState.id ? priorGuessingResult.wins++ : priorGuessingResult.loses++;
-
-        const posteriorGuessedState = this.modelNumber === 3
-          ? this.getMostProbableStateFromMessage(intersection)
-          : this.getRandomStateFromMessage(intersection);
-        posteriorGuessedState.id === actualState.id ? posteriorGuessingResult.wins++ : posteriorGuessingResult.loses++;
-      }
-
-      const priorProfit = this.getAverageProfit(priorGuessingResult);
-      const posteriorProfit = this.getAverageProfit(posteriorGuessingResult);
-      const informationValue = posteriorProfit - priorProfit;
-
-      priorProfits.push(priorProfit);
-      posteriorProfits.push(posteriorProfit);
-      informationValues.push(informationValue);
+      priorProfits.push(modelResult.priorProfit);
+      posteriorProfits.push(modelResult.posteriorProfit);
+      informationValues.push(modelResult.informationValue);
     }
 
     const experimentResult: ExperimentResult = {
@@ -171,6 +179,8 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
 
     this.rowData.unshift(experimentResult);
     this.gridApi?.setRowData(this.rowData);
+
+    this.loaderService.decreaseLoaderCallCounter$.next();
   }
 
   // Helpers methods
@@ -219,7 +229,7 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
       }
     }
 
-    return { id: 0, probability: 0 };
+    return this.EMPTY_STATE;
   }
 
   private getMessage(states: State[], actualState: State, statesAmount: number) {
@@ -243,6 +253,20 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
     return intersection;
   }
 
+  private getGuessedState(message: State[]) {
+    switch (this.modelNumber) {
+      case 1:
+      case 2:
+        return this.getRandomStateFromMessage(message);
+      case 3:
+        return this.getMostProbableStateFromMessage(message);
+      case 4:
+        return this.getRandomStateFromMostProbableSubMessage(message);
+      default:
+        return this.EMPTY_STATE;
+    }
+  }
+
   private getRandomStateFromMessage(message: State[]) {
     const randomStateNumber = Math.floor(Math.random() * message.length);
 
@@ -255,6 +279,14 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
     return sortedArray[sortedArray.length - 1];
   }
 
+  private getRandomStateFromMostProbableSubMessage(message: State[]) {
+    const mostProbableSubMessage = message
+      .sort((a: State, b: State) => b.probability - a.probability)
+      .slice(0, Math.ceil(message.length / 4));
+
+    return this.getRandomStateFromMessage(mostProbableSubMessage);
+  }
+
   private getAverageProfit(guessingResults: { wins: number, loses: number }) {
     return this.alpha * (guessingResults.wins / this.guessingAmount)
       + this.beta * (guessingResults.loses / this.guessingAmount);
@@ -262,12 +294,14 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
 
   // Buttons
   public onRunModelClick() {
+
     if (this.informationValueModelForm.invalid) {
       this.informationValueModelForm.markAllAsTouched();
       this.informationValueModelForm.markAsDirty();
 
       return;
     }
+    this.loaderService.increaseLoaderCallCounter$.next();
 
     this.runExperiment();
   }

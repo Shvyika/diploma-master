@@ -24,7 +24,8 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
   private modelNumber: number = 1;
   private alpha: number = 2;
   private beta: number = 1;
-  private guessingAmount: number = 1000;
+  private experimentsAmount: number = 100;
+  private guessingAmount: number = 100;
   private statesAmount: number = 100;
   private userStatesAmount: number = 20;
   private watcherStatesAmount: number = 20;
@@ -46,7 +47,10 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
         { value: 1, disabled: false }, [Validators.required, Validators.min(1)]
       ),
       guessingAmount: new FormControl(
-        { value: 1000, disabled: false }, [Validators.required, Validators.min(1)]
+        { value: 100, disabled: false }, [Validators.required, Validators.min(1)]
+      ),
+      experimentsAmount: new FormControl(
+        { value: 100, disabled: false }, [Validators.required, Validators.min(1)]
       ),
       statesAmount: new FormControl(
         { value: 100, disabled: false }, [Validators.required, Validators.min(1)]
@@ -77,6 +81,12 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
       takeUntil(this.unsubscribe$)
     ).subscribe((beta: number) => {
       this.beta = beta;
+    });
+
+    this.informationValueModelForm.get('experimentsAmount')?.valueChanges.pipe(
+      takeUntil(this.unsubscribe$)
+    ).subscribe((experimentsAmount: number) => {
+      this.experimentsAmount = experimentsAmount;
     });
 
     this.informationValueModelForm.get('guessingAmount')?.valueChanges.pipe(
@@ -115,65 +125,71 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
     }
   }
 
-  private runModel() {
-    console.log("=====");
+  private runExperiment() {
     const states = this.modelNumber === 1 ? this.getUniformStates() : this.getNonUniformStates();
-    const actualState = states.find((state: State) => state.isActual) as State;
-    console.log(actualState);
-    const priorGuessingResult = { wins: 0, loses: 0 };
-    const posteriorGuessingResult = { wins: 0, loses: 0 };
 
-    for (let i = 0; i < this.guessingAmount; i++) {
-      const userMessage = this.getMessage(states, actualState, this.userStatesAmount);
-      const watcherMessage = this.getMessage(states, actualState, this.watcherStatesAmount);
-      const intersection = this.getMessagesIntersection(userMessage, watcherMessage);
+    const priorProfits = [];
+    const posteriorProfits = [];
+    const informationValues = [];
 
-      const priorGuessedState = this.modelNumber === 3
-        ? this.getMostProbableStateFromMessage(userMessage)
-        : this.getRandomStateFromMessage(userMessage);
-      priorGuessedState.id === actualState.id ? priorGuessingResult.wins++ : priorGuessingResult.loses++;
+    for (let i = 0; i < this.experimentsAmount; i++) {
+      const actualState = this.modelNumber === 1 ? this.getUniformActualState(states) : this.getNonUniformActualState(states);
+      const priorGuessingResult = { wins: 0, loses: 0 };
+      const posteriorGuessingResult = { wins: 0, loses: 0 };
 
-      const posteriorGuessedState = this.modelNumber === 3
-        ? this.getMostProbableStateFromMessage(intersection)
-        : this.getRandomStateFromMessage(intersection);
-      posteriorGuessedState.id === actualState.id ? posteriorGuessingResult.wins++ : posteriorGuessingResult.loses++;
+      for (let j = 0; j < this.guessingAmount; j++) {
+        const userMessage = this.getMessage(states, actualState, this.userStatesAmount);
+        const watcherMessage = this.getMessage(states, actualState, this.watcherStatesAmount);
+        const intersection = this.getMessagesIntersection(userMessage, watcherMessage);
+
+        const priorGuessedState = this.modelNumber === 3
+          ? this.getMostProbableStateFromMessage(userMessage)
+          : this.getRandomStateFromMessage(userMessage);
+        priorGuessedState.id === actualState.id ? priorGuessingResult.wins++ : priorGuessingResult.loses++;
+
+        const posteriorGuessedState = this.modelNumber === 3
+          ? this.getMostProbableStateFromMessage(intersection)
+          : this.getRandomStateFromMessage(intersection);
+        posteriorGuessedState.id === actualState.id ? posteriorGuessingResult.wins++ : posteriorGuessingResult.loses++;
+      }
+
+      const priorProfit = this.getAverageProfit(priorGuessingResult);
+      const posteriorProfit = this.getAverageProfit(posteriorGuessingResult);
+      const informationValue = posteriorProfit - priorProfit;
+
+      priorProfits.push(priorProfit);
+      posteriorProfits.push(posteriorProfit);
+      informationValues.push(informationValue);
     }
-
-    console.log(priorGuessingResult);
-    console.log(posteriorGuessingResult);
-    const priorAverageProfit = this.getAverageProfit(priorGuessingResult);
-    const posteriorAverageProfit = this.getAverageProfit(posteriorGuessingResult);
-
-    const informationValue = posteriorAverageProfit - priorAverageProfit;
 
     const experimentResult: ExperimentResult = {
       modelNumber: this.modelNumber,
-      alpha: this.alpha,
-      beta: this.beta,
-      statesAmount: this.statesAmount,
-      guessingAmount: this.guessingAmount,
-      priorAverageProfit,
-      posteriorAverageProfit,
-      informationValue
+      averagePriorProfit: priorProfits.reduce((x: number, y: number) => x + y) / priorProfits.length,
+      averagePosteriorProfit: posteriorProfits.reduce((x: number, y: number) => x + y) / posteriorProfits.length,
+      averageInformationValue: informationValues.reduce((x: number, y: number) => x + y) / informationValues.length
     };
 
     this.rowData.unshift(experimentResult);
     this.gridApi?.setRowData(this.rowData);
-    console.log("=====");
   }
 
   // Helpers methods
   private getUniformStates(): State[] {
-    const actualStateId = Math.floor(Math.random() * this.statesAmount) + 1;
-
     const states = [];
 
     for (let i = 1; i <= this.statesAmount; i++) {
-      const state = { id: i, probability: 1 / this.statesAmount, isActual: i === actualStateId};
+      const state = { id: i, probability: 0 };
+
       states.push(state);
     }
 
     return states;
+  }
+
+  private getUniformActualState(states: State[]) {
+    const actualStateNumber = Math.floor(Math.random() * states.length) + 1;
+
+    return states[actualStateNumber - 1];
   }
 
   private getNonUniformStates() {
@@ -182,12 +198,9 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
     const states = [];
 
     for (let i = 1; i <= this.statesAmount; i++) {
-      const state = { id: i, probability: i / sum, isActual: false };
+      const state = { id: i, probability: i / sum };
       states.push(state);
     }
-
-    const actualState = this.getNonUniformActualState(states);
-    states[actualState.id - 1].isActual = true;
 
     return states;
   }
@@ -206,11 +219,11 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
       }
     }
 
-    return { id: 0, probability: 0, isActual: false };
+    return { id: 0, probability: 0 };
   }
 
   private getMessage(states: State[], actualState: State, statesAmount: number) {
-    const filteredArray = [...states].filter((state: State) => !state.isActual);
+    const filteredArray = [...states].filter((state: State) => state.id !== actualState.id);
     const shuffledArray = [...filteredArray].sort(() => 0.5 - Math.random());
 
     return [...shuffledArray.slice(0, statesAmount - 1), actualState].sort(() => 0.5 - Math.random());
@@ -256,7 +269,7 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
       return;
     }
 
-    this.runModel();
+    this.runExperiment();
   }
 
   public onClearTable() {

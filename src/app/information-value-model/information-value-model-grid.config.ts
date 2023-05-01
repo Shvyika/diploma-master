@@ -7,39 +7,19 @@ export const columnDefs: ColDef[] = [
     valueGetter: (params) => params.data.modelNumber
   },
   {
-    headerName: 'Alpha',
-    field: 'alpha',
-    valueGetter: (params) => params.data.alpha
+    headerName: 'Average Prior Profit',
+    field: 'averagePriorProfit',
+    valueGetter: (params) => params.data.averagePriorProfit
   },
   {
-    headerName: 'Beta',
-    field: 'beta',
-    valueGetter: (params) => params.data.beta
+    headerName: 'Average Posterior Profit',
+    field: 'averagePosteriorProfit',
+    valueGetter: (params) => params.data.averagePosteriorProfit
   },
   {
-    headerName: 'Amount of States',
-    field: 'statesAmount',
-    valueGetter: (params) => params.data.statesAmount
-  },
-  {
-    headerName: `Amount of 'Guessing'`,
-    field: 'experimentsAmount',
-    valueGetter: (params) => params.data.guessingAmount
-  },
-  {
-    headerName: 'Prior Profit',
-    field: 'priorProfit',
-    valueGetter: (params) => params.data.priorAverageProfit
-  },
-  {
-    headerName: 'Posterior Profit',
-    field: 'posteriorProfit',
-    valueGetter: (params) => params.data.posteriorAverageProfit
-  },
-  {
-    headerName: 'Information Value',
-    field: 'informationValue',
-    valueGetter: (params) => params.data.informationValue
+    headerName: 'Average Information Value',
+    field: 'averageInformationValue',
+    valueGetter: (params) => params.data.averageInformationValue
   },
 ];
 

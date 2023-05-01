@@ -10,13 +10,16 @@
       <h2 class="m-0">Pick Information Value Model:</h2>
       <mat-radio-group class="model-radio-group" [formControlName]="'modelNumber'">
         <mat-radio-button class="model-radio-button" [checked]="true" [value]=1>
-          1. Uniform probability distribution with random state selection
+          1. Uniform probability distribution with random state selection.
         </mat-radio-button>
         <mat-radio-button class="model-radio-button" [checked]="false" [value]=2>
-          2. Non-uniform probability distribution with random state selection
+          2. Non-uniform probability distribution with random state selection.
         </mat-radio-button>
         <mat-radio-button class="model-radio-button" [checked]="false" [value]=3>
-          3. Non-uniform probability distribution with most probable state selection
+          3. Non-uniform probability distribution with most probable state selection.
+        </mat-radio-button>
+        <mat-radio-button class="model-radio-button" [checked]="false" [value]=4>
+          4. Non-uniform probability distribution with random selection from most probable states.
         </mat-radio-button>
       </mat-radio-group>
     </div>
@@ -27,14 +30,19 @@
       <h2 class="m-0">Model Parameters</h2>
     </div>
 
-    <mat-form-field class="col-lg-4" appearance="fill">
+    <mat-form-field class="col-lg-2 col-sm-12" appearance="fill">
       <mat-label>Alpha</mat-label>
       <input matInput type="number" placeholder="Alpha" [formControlName]="'alpha'">
     </mat-form-field>
 
-    <mat-form-field class="col-lg-4 col-sm-12" appearance="fill">
+    <mat-form-field class="col-lg-2 col-sm-12" appearance="fill">
       <mat-label>Beta</mat-label>
       <input matInput type="number" placeholder="Beta" [formControlName]="'beta'">
+    </mat-form-field>
+
+    <mat-form-field class="col-lg-4 col-sm-12" appearance="fill">
+      <mat-label>Amount of Experiments</mat-label>
+      <input matInput type="number" placeholder="Amount" [formControlName]="'experimentsAmount'">
     </mat-form-field>
 
     <mat-form-field class="col-lg-4 col-sm-12" appearance="fill">

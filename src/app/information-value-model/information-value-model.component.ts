@@ -5,9 +5,9 @@ import { Subject, takeUntil } from 'rxjs';
 
 import { State } from '../shared/entities/condition.interface';
 import { ExperimentResult } from '../shared/entities/experiment-result.interface';
+import { LoaderService } from '../shared/services/loader.service';
 
 import { columnDefs, defaultColDef } from './information-value-model-grid.config';
-import { LoaderService } from '../shared/services/loader.service';
 
 @Component({
   selector: 'app-information-value-model',
@@ -17,7 +17,7 @@ import { LoaderService } from '../shared/services/loader.service';
 export class InformationValueModelComponent implements OnInit, OnDestroy {
   private EMPTY_STATE: State = { id: 0, probability: 0 };
 
-  public informationValueModelForm: FormGroup = new FormGroup({});
+  public modelParametersForm: FormGroup = new FormGroup({});
 
   private gridApi: GridApi | undefined;
   public columnDefs = columnDefs;
@@ -44,7 +44,7 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
   }
 
   private initForm(): void {
-    this.informationValueModelForm = new FormGroup({
+    this.modelParametersForm = new FormGroup({
       modelNumber: new FormControl(),
       alpha: new FormControl(
         { value: 2, disabled: false }, [Validators.required, Validators.min(1)]
@@ -81,59 +81,59 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
   }
 
   private addSubscriptions(): void {
-    this.informationValueModelForm.get('modelNumber')?.valueChanges.pipe(
+    this.modelParametersForm.get('modelNumber')?.valueChanges.pipe(
       takeUntil(this.unsubscribe$)
     ).subscribe((modelNumber: number) => {
       this.modelNumber = modelNumber;
 
       this.modelNumber === 4
-        ? this.informationValueModelForm.get('statesPercent')?.enable()
-        : this.informationValueModelForm.get('statesPercent')?.disable();
+        ? this.modelParametersForm.get('statesPercent')?.enable()
+        : this.modelParametersForm.get('statesPercent')?.disable();
     });
 
-    this.informationValueModelForm.get('alpha')?.valueChanges.pipe(
+    this.modelParametersForm.get('alpha')?.valueChanges.pipe(
       takeUntil(this.unsubscribe$)
     ).subscribe((alpha: number) => {
       this.alpha = alpha;
     });
 
-    this.informationValueModelForm.get('beta')?.valueChanges.pipe(
+    this.modelParametersForm.get('beta')?.valueChanges.pipe(
       takeUntil(this.unsubscribe$)
     ).subscribe((beta: number) => {
       this.beta = beta;
     });
 
-    this.informationValueModelForm.get('experimentsAmount')?.valueChanges.pipe(
+    this.modelParametersForm.get('experimentsAmount')?.valueChanges.pipe(
       takeUntil(this.unsubscribe$)
     ).subscribe((experimentsAmount: number) => {
       this.experimentsAmount = experimentsAmount;
     });
 
-    this.informationValueModelForm.get('guessingAmount')?.valueChanges.pipe(
+    this.modelParametersForm.get('guessingAmount')?.valueChanges.pipe(
       takeUntil(this.unsubscribe$)
     ).subscribe((guessingAmount: number) => {
       this.guessingAmount = guessingAmount;
     });
 
-    this.informationValueModelForm.get('statesAmount')?.valueChanges.pipe(
+    this.modelParametersForm.get('statesAmount')?.valueChanges.pipe(
       takeUntil(this.unsubscribe$)
     ).subscribe((statesAmount: number) => {
       this.statesAmount = statesAmount;
     });
 
-    this.informationValueModelForm.get('userStatesAmount')?.valueChanges.pipe(
+    this.modelParametersForm.get('userStatesAmount')?.valueChanges.pipe(
       takeUntil(this.unsubscribe$)
     ).subscribe((userStatesAmount: number) => {
       this.userStatesAmount = userStatesAmount;
     });
 
-    this.informationValueModelForm.get('watcherStatesAmount')?.valueChanges.pipe(
+    this.modelParametersForm.get('watcherStatesAmount')?.valueChanges.pipe(
       takeUntil(this.unsubscribe$)
     ).subscribe((watcherStatesAmount: number) => {
       this.watcherStatesAmount = watcherStatesAmount;
     });
 
-    this.informationValueModelForm.get('statesPercent')?.valueChanges.pipe(
+    this.modelParametersForm.get('statesPercent')?.valueChanges.pipe(
       takeUntil(this.unsubscribe$)
     ).subscribe((statesPercent: number) => {
       this.statesPercent = statesPercent;
@@ -177,31 +177,34 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
   }
 
   private runExperiment() {
+    this.loaderService.increaseLoaderCallCounter$.next();
+
     const states = this.modelNumber === 1 ? this.getUniformStates() : this.getNonUniformStates();
 
-    const priorProfits = [];
-    const posteriorProfits = [];
-    const informationValues = [];
+    return new Promise<ExperimentResult>((resolve) => {
+      setTimeout(() => {
+        const priorProfits = [];
+        const posteriorProfits = [];
+        const informationValues = [];
 
-    for (let i = 0; i < this.experimentsAmount; i++) {
-      const modelResult = this.runModel(states);
+        for (let i = 0; i < this.experimentsAmount; i++) {
+          const modelResult = this.runModel(states);
 
-      priorProfits.push(modelResult.priorProfit);
-      posteriorProfits.push(modelResult.posteriorProfit);
-      informationValues.push(modelResult.informationValue);
-    }
+          priorProfits.push(modelResult.priorProfit);
+          posteriorProfits.push(modelResult.posteriorProfit);
+          informationValues.push(modelResult.informationValue);
+        }
 
-    const experimentResult: ExperimentResult = {
-      modelNumber: this.modelNumber,
-      averagePriorProfit: priorProfits.reduce((x: number, y: number) => x + y) / priorProfits.length,
-      averagePosteriorProfit: posteriorProfits.reduce((x: number, y: number) => x + y) / posteriorProfits.length,
-      averageInformationValue: informationValues.reduce((x: number, y: number) => x + y) / informationValues.length
-    };
+        const experimentResult: ExperimentResult = {
+          modelNumber: this.modelNumber,
+          averagePriorProfit: priorProfits.reduce((x: number, y: number) => x + y) / priorProfits.length,
+          averagePosteriorProfit: posteriorProfits.reduce((x: number, y: number) => x + y) / posteriorProfits.length,
+          averageInformationValue: informationValues.reduce((x: number, y: number) => x + y) / informationValues.length
+        };
 
-    this.rowData.unshift(experimentResult);
-    this.gridApi?.setRowData(this.rowData);
-
-    this.loaderService.decreaseLoaderCallCounter$.next();
+        resolve(experimentResult);
+      }, 50);
+    });
   }
 
   // Helpers methods
@@ -315,15 +318,19 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
 
   // Buttons
   public onRunModelClick() {
-    if (this.informationValueModelForm.invalid) {
-      this.informationValueModelForm.markAllAsTouched();
-      this.informationValueModelForm.markAsDirty();
+    if (this.modelParametersForm.invalid) {
+      this.modelParametersForm.markAllAsTouched();
+      this.modelParametersForm.markAsDirty();
 
       return;
     }
-    this.loaderService.increaseLoaderCallCounter$.next();
 
-    this.runExperiment();
+    this.runExperiment().then((experimentResult: ExperimentResult) => {
+      this.rowData.unshift(experimentResult);
+      this.gridApi?.setRowData(this.rowData);
+
+      this.loaderService.decreaseLoaderCallCounter$.next();
+    });
   }
 
   public onClearTable() {

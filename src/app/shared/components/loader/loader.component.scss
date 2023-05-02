@@ -42,39 +42,34 @@
   }
 }
 
-$width: 32px;
-$top: calc(50% - #{$width}/2);
-$left: calc(50% - #{$width}/2);
+$width: 40px;
+$top: calc(50% - #{$width} / 2);
+$left: calc(50% - #{$width} / 2);
 
-.loading-wrapper{
-  position: absolute;
-  z-index: 997;
+:host {
+
+}
+
+.loading-wrapper {
+  position: fixed;
+  z-index: 1000;
   height: 100%;
   width: 100%;
-  margin: auto;
   top: 0;
-  left: 0;
   bottom: 0;
-  background-color: rgba(0, 0, 0, 0.05);
+  left: 0;
   right: 0;
+  background-color: rgba(0, 0, 0, 0.05);
 
-  img {
+  .loading {
     position: absolute;
     top: $top;
     left: $left;
-    margin-left: 3px;
-    margin-top: 3px;
+    width: $width;
+    height: $width;
+    border-radius: 50%;
+    border: 0.2rem solid blue;
+    border-top-color: white;
+    @include animation(spin 1s infinite linear);
   }
-}
-
-.loading {
-  position: absolute;
-  top: $top;
-  left: $left;
-  width: $width;
-  height: $width;
-  border-radius: 50%;
-  border: 0.2rem solid blue;
-  border-top-color: white;
-  @include animation(spin 1s infinite linear);
 }

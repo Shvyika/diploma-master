@@ -31,7 +31,7 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
   private guessingAmount: number = 100;
   private statesAmount: number = 100;
   private userStatesAmount: number = 20;
-  private watcherStatesAmount: number = 20;
+  private observerStatesAmount: number = 20;
   private statesPercent: number = 25;
 
   private unsubscribe$ = new Subject<void>();
@@ -69,7 +69,7 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
         { value: 20, disabled: false },
         [Validators.required, Validators.min(1)]
       ),
-      watcherStatesAmount: new FormControl(
+      observerStatesAmount: new FormControl(
         { value: 20, disabled: false },
         [Validators.required, Validators.min(1)]
       ),
@@ -127,10 +127,10 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
       this.userStatesAmount = userStatesAmount;
     });
 
-    this.modelParametersForm.get('watcherStatesAmount')?.valueChanges.pipe(
+    this.modelParametersForm.get('observerStatesAmount')?.valueChanges.pipe(
       takeUntil(this.unsubscribe$)
-    ).subscribe((watcherStatesAmount: number) => {
-      this.watcherStatesAmount = watcherStatesAmount;
+    ).subscribe((observerStatesAmount: number) => {
+      this.observerStatesAmount = observerStatesAmount;
     });
 
     this.modelParametersForm.get('statesPercent')?.valueChanges.pipe(
@@ -159,7 +159,7 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
 
     for (let i = 0; i < this.guessingAmount; i++) {
       const userMessage = this.getMessage(states, actualState, this.userStatesAmount);
-      const watcherMessage = this.getMessage(states, actualState, this.watcherStatesAmount);
+      const watcherMessage = this.getMessage(states, actualState, this.observerStatesAmount);
       const intersection = this.getMessagesIntersection(userMessage, watcherMessage);
 
       const priorGuessedState = this.getGuessedState(userMessage);

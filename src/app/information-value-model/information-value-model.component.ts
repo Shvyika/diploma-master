@@ -3,9 +3,9 @@ import { FormGroup, FormControl, Validators } from '@angular/forms';
 import { GridApi, GridReadyEvent } from 'ag-grid-community';
 import { Subject, takeUntil } from 'rxjs';
 
+import { LoaderService } from '../shared/services/loader.service';
 import { State } from '../shared/entities/condition.interface';
 import { ExperimentResult } from '../shared/entities/experiment-result.interface';
-import { LoaderService } from '../shared/services/loader.service';
 
 import { columnDefs, defaultColDef } from './information-value-model-grid.config';
 
@@ -168,6 +168,9 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
       const posteriorGuessedState = this.getGuessedState(intersection);
       posteriorGuessedState.id === actualState.id ? posteriorGuessingResult.wins++ : posteriorGuessingResult.loses++;
     }
+
+    console.log(priorGuessingResult);
+    console.log(posteriorGuessingResult);
 
     const priorProfit = this.getAverageProfit(priorGuessingResult);
     const posteriorProfit = this.getAverageProfit(posteriorGuessingResult);

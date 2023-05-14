@@ -7,6 +7,16 @@ export const columnDefs: ColDef[] = [
     valueGetter: (params) => params.data.modelNumber
   },
   {
+    headerName: 'Average User Message',
+    field: 'averagePriorProfit',
+    valueGetter: (params) => params.data.averageUserStatesAmount
+  },
+  {
+    headerName: 'Average Observer Message',
+    field: 'averagePriorProfit',
+    valueGetter: (params) => params.data.averageObserverStatesAmount
+  },
+  {
     headerName: 'Average Prior Profit',
     field: 'averagePriorProfit',
     valueGetter: (params) => params.data.averagePriorProfit

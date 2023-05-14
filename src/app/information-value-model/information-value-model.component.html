@@ -72,6 +72,12 @@
 
     <div class="col-12">
       <button mat-raised-button (click)="onRunModelClick()">Run Model</button>
+
+      <span class="mx-2">|</span>
+      <span>Fixed Message Length</span>
+      <mat-slide-toggle color="primary" class="mx-2" [formControlName]="'isRandomMessageLength'"></mat-slide-toggle>
+      <span>Random Message Length</span>
+      <span class="mx-2">|</span>
     </div>
   </div>
 

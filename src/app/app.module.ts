@@ -13,6 +13,7 @@ import { SharedModule } from './shared/shared.module';
 import { AppComponent } from './app.component';
 import { InformationValueModelComponent } from './information-value-model/information-value-model.component';
 import { PageNotFoundComponent } from './page-not-found/page-not-found.component';
+import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 
 @NgModule({
   imports: [
@@ -24,7 +25,8 @@ import { PageNotFoundComponent } from './page-not-found/page-not-found.component
     MatButtonModule,
     MatRadioModule,
     AgGridModule,
-    SharedModule
+    SharedModule,
+    MatSlideToggleModule
   ],
   declarations: [
     AppComponent,

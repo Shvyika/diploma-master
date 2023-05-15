@@ -32,8 +32,10 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
   private statesAmount: number = 100;
   private userStatesAmount: number = 20;
   private observerStatesAmount: number = 20;
+  private userMessageThreshold: number = 0.2;
+  private observerMessageThreshold: number = 0.2;
   private statesPercent: number = 25;
-  private isRandomMessageLength: boolean = false;
+  public isRandomMessageLength: boolean = false;
 
   private unsubscribe$ = new Subject<void>();
 
@@ -73,6 +75,14 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
       observerStatesAmount: new FormControl(
         { value: 20, disabled: false },
         [Validators.required, Validators.min(1)]
+      ),
+      userMessageThreshold: new FormControl(
+        { value: 0.2, disabled: true },
+        [Validators.required, Validators.min(0), Validators.max(1)]
+      ),
+      observerMessageThreshold: new FormControl(
+        { value: 0.2, disabled: true },
+        [Validators.required, Validators.min(0), Validators.max(1)]
       ),
       statesPercent: new FormControl(
         { value: 25, disabled: true },
@@ -135,6 +145,18 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
       this.observerStatesAmount = observerStatesAmount;
     });
 
+    this.modelParametersForm.get('userMessageThreshold')?.valueChanges.pipe(
+      takeUntil(this.unsubscribe$)
+    ).subscribe((userMessageThreshold: number) => {
+      this.userMessageThreshold = userMessageThreshold;
+    });
+
+    this.modelParametersForm.get('observerMessageThreshold')?.valueChanges.pipe(
+      takeUntil(this.unsubscribe$)
+    ).subscribe((observerMessageThreshold: number) => {
+      this.observerMessageThreshold = observerMessageThreshold;
+    });
+
     this.modelParametersForm.get('statesPercent')?.valueChanges.pipe(
       takeUntil(this.unsubscribe$)
     ).subscribe((statesPercent: number) => {
@@ -149,9 +171,15 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
       if (this.isRandomMessageLength) {
         this.modelParametersForm.get('userStatesAmount')?.disable();
         this.modelParametersForm.get('observerStatesAmount')?.disable();
+
+        this.modelParametersForm.get('userMessageThreshold')?.enable();
+        this.modelParametersForm.get('observerMessageThreshold')?.enable();
       } else {
         this.modelParametersForm.get('userStatesAmount')?.enable();
         this.modelParametersForm.get('observerStatesAmount')?.enable();
+
+        this.modelParametersForm.get('userMessageThreshold')?.disable();
+        this.modelParametersForm.get('observerMessageThreshold')?.disable();
       }
     });
   }
@@ -177,10 +205,10 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
 
     for (let i = 0; i < this.guessingAmount; i++) {
       const userMessage = this.isRandomMessageLength
-        ? this.getRandomMessage(states, actualState)
+        ? this.getRandomMessage(states, actualState, this.userMessageThreshold)
         : this.getMessage(states, actualState, this.userStatesAmount);
       const observerMessage = this.isRandomMessageLength
-        ? this.getRandomMessage(states, actualState)
+        ? this.getRandomMessage(states, actualState, this.observerMessageThreshold)
         : this.getMessage(states, actualState, this.observerStatesAmount);
       const intersection = this.getMessagesIntersection(userMessage, observerMessage);
 
@@ -296,14 +324,12 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
     return [...shuffledArray.slice(0, statesAmount - 1), actualState].sort(() => 0.5 - Math.random());
   }
 
-  private getRandomMessage(states: State[], actualState: State) {
-    const threshold = 1 / 2;
-
+  private getRandomMessage(states: State[], actualState: State, threshold: number) {
     const message = [actualState];
     const filteredArray = [...states].filter((state: State) => state.id !== actualState.id);
 
     filteredArray.forEach((state: State) => {
-      if (Math.random() >= threshold) {
+      if (Math.random() <= threshold) {
         message.push(state);
       }
     });

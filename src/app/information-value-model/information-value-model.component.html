@@ -32,52 +32,58 @@
 
     <mat-form-field class="col-lg-3 col-sm-12" appearance="fill">
       <mat-label>Alpha</mat-label>
-      <input matInput type="number" placeholder="Alpha" [formControlName]="'alpha'">
+      <input matInput type="number" placeholder="Alpha" [min]="0" [formControlName]="'alpha'">
     </mat-form-field>
 
     <mat-form-field class="col-lg-3 col-sm-12" appearance="fill">
       <mat-label>Beta</mat-label>
-      <input matInput type="number" placeholder="Beta" [formControlName]="'beta'">
+      <input matInput type="number" placeholder="Beta" [min]="0" [formControlName]="'beta'">
     </mat-form-field>
 
     <mat-form-field class="col-lg-3 col-sm-12" appearance="fill">
-      <mat-label>Amount of Experiments</mat-label>
-      <input matInput type="number" placeholder="Amount" [formControlName]="'experimentsAmount'">
+      <mat-label>Experiments Amount</mat-label>
+      <input matInput type="number" placeholder="Amount" [min]="1" [formControlName]="'experimentsAmount'">
     </mat-form-field>
 
     <mat-form-field class="col-lg-3 col-sm-12" appearance="fill">
-      <mat-label>Amount of 'Guessing'</mat-label>
-      <input matInput type="number" placeholder="Amount" [formControlName]="'guessingAmount'">
+      <mat-label>'Guessing' Amount</mat-label>
+      <input matInput type="number" placeholder="Amount" [min]="1" [formControlName]="'guessingAmount'">
     </mat-form-field>
 
     <mat-form-field class="col-lg-3 col-sm-12" appearance="fill">
-      <mat-label>Amount of States</mat-label>
-      <input matInput type="number" placeholder="Amount" [formControlName]="'statesAmount'">
+      <mat-label>States Amount</mat-label>
+      <input matInput type="number" placeholder="Amount" [min]="1" [formControlName]="'statesAmount'">
+    </mat-form-field>
+
+    <mat-form-field *ngIf="!isRandomMessageLength" class="col-lg-3 col-sm-12" appearance="fill">
+      <mat-label>User Message States</mat-label>
+      <input matInput type="number" placeholder="Amount" [min]="1" [formControlName]="'userStatesAmount'">
+    </mat-form-field>
+
+    <mat-form-field *ngIf="!isRandomMessageLength" class="col-lg-3 col-sm-12" appearance="fill">
+      <mat-label>Observer Message States</mat-label>
+      <input matInput type="number" placeholder="Amount" [min]="1" [formControlName]="'observerStatesAmount'">
+    </mat-form-field>
+
+    <mat-form-field *ngIf="isRandomMessageLength" class="col-lg-3 col-sm-12" appearance="fill">
+      <mat-label>User Message Entry Threshold</mat-label>
+      <input matInput type="number" placeholder="Amount" [min]="0" [max]="1" [formControlName]="'userMessageThreshold'">
+    </mat-form-field>
+
+    <mat-form-field *ngIf="isRandomMessageLength" class="col-lg-3 col-sm-12" appearance="fill">
+      <mat-label>Observer Message Entry Threshold</mat-label>
+      <input matInput type="number" placeholder="Amount" [min]="0" [max]="1" [formControlName]="'observerMessageThreshold'">
     </mat-form-field>
 
     <mat-form-field class="col-lg-3 col-sm-12" appearance="fill">
-      <mat-label>Amount of States in User Message</mat-label>
-      <input matInput type="number" placeholder="Amount" [formControlName]="'userStatesAmount'">
-    </mat-form-field>
-
-    <mat-form-field class="col-lg-3 col-sm-12" appearance="fill">
-      <mat-label>Amount of States in Observer Message</mat-label>
-      <input matInput type="number" placeholder="Amount" [formControlName]="'observerStatesAmount'">
-    </mat-form-field>
-
-    <mat-form-field class="col-lg-3 col-sm-12" appearance="fill">
-      <mat-label>Percent of States for Model 4</mat-label>
-      <input matInput type="number" placeholder="Amount" [formControlName]="'statesPercent'">
+      <mat-label>States Percent for Sub-Message</mat-label>
+      <input matInput type="number" placeholder="Amount" [min]="0" [max]="100" [formControlName]="'statesPercent'">
     </mat-form-field>
 
     <div class="col-12">
       <button mat-raised-button (click)="onRunModelClick()">Run Model</button>
 
-      <span class="mx-2">|</span>
-      <span>Fixed Message Length</span>
-      <mat-slide-toggle color="primary" class="mx-2" [formControlName]="'isRandomMessageLength'"></mat-slide-toggle>
-      <span>Random Message Length</span>
-      <span class="mx-2">|</span>
+      <mat-checkbox color="primary" [formControlName]="'isRandomMessageLength'">Use Random Messages Length</mat-checkbox>
     </div>
   </div>
 

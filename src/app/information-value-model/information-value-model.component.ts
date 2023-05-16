@@ -25,6 +25,7 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
   public rowData: ExperimentResult[] = [];
 
   private modelNumber: number = 1;
+  private distributionParameter: number = 0;
   private alpha: number = 2;
   private beta: number = 1;
   private experimentsAmount: number = 100;
@@ -49,6 +50,9 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
   private initForm(): void {
     this.modelParametersForm = new FormGroup({
       modelNumber: new FormControl(),
+      distributionParameter: new FormControl(
+        { value: 0, disabled: false }, [Validators.required, Validators.min(0)]
+      ),
       alpha: new FormControl(
         { value: 2, disabled: false }, [Validators.required, Validators.min(1)]
       ),
@@ -101,6 +105,12 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
       this.modelNumber === 4
         ? this.modelParametersForm.get('statesPercent')?.enable()
         : this.modelParametersForm.get('statesPercent')?.disable();
+    });
+
+    this.modelParametersForm.get('distributionParameter')?.valueChanges.pipe(
+      takeUntil(this.unsubscribe$)
+    ).subscribe((distributionParameter: number) => {
+      this.distributionParameter = distributionParameter;
     });
 
     this.modelParametersForm.get('alpha')?.valueChanges.pipe(
@@ -288,12 +298,12 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
   }
 
   private getNonUniformStates() {
-    const sum = (this.statesAmount * (this.statesAmount + 1)) / 2;
+    const sum = (this.statesAmount * (this.statesAmount + 2 * this.distributionParameter + 1)) / 2;
 
     const states = [];
 
     for (let i = 1; i <= this.statesAmount; i++) {
-      const state = { id: i, probability: i / sum };
+      const state = { id: i, probability: (this.distributionParameter + i) / sum };
       states.push(state);
     }
 

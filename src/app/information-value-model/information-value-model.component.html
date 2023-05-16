@@ -6,31 +6,31 @@
   </div>
 
   <div class="row section">
-    <div class="col-lg-7 col-sm-12">
+    <div class="col-lg-6 col-sm-12">
       <h2 class="m-0">Pick Information Value Model:</h2>
       <mat-radio-group class="model-radio-group" color="primary" [formControlName]="'modelNumber'">
         <mat-radio-button class="model-radio-button" [checked]="true" [value]=1>
-          1. Uniform probability distribution with random state selection.
+          1. Uniform distribution with random state selection.
         </mat-radio-button>
         <mat-radio-button class="model-radio-button" [checked]="false" [value]=2>
-          2. Non-uniform probability distribution with random state selection.
+          2. Non-uniform distribution with random state selection.
         </mat-radio-button>
         <mat-radio-button class="model-radio-button" [checked]="false" [value]=3>
-          3. Non-uniform probability distribution with most probable state selection.
+          3. Non-uniform distribution with most probable state selection.
         </mat-radio-button>
         <mat-radio-button class="model-radio-button" [checked]="false" [value]=4>
-          4. Non-uniform probability distribution with random state selection from most probable ones.
+          4. Non-uniform distribution with random state selection from most probable ones.
         </mat-radio-button>
       </mat-radio-group>
     </div>
 
-    <div class="col-lg-5 col-sm-12">
+    <div class="col-lg-6 col-sm-12">
       <div class="row">
         <div class="col-12 mb-3">
           <h2 class="m-0">Set parameter <strong>k</strong> for non-uniform distribution</h2>
         </div>
 
-        <mat-form-field class="col-lg-8 col-sm-12" appearance="fill">
+        <mat-form-field class="col-lg-6 col-sm-12" appearance="fill">
           <mat-label>Distribution parameter <strong>k</strong></mat-label>
           <input matInput type="number" placeholder="k" [min]="0" [formControlName]="'distributionParameter'">
         </mat-form-field>

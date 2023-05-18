@@ -35,7 +35,7 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
   private observerStatesAmount: number = 20;
   private userMessageThreshold: number = 0.2;
   private observerMessageThreshold: number = 0.2;
-  private statesPercent: number = 25;
+  private statesPercent: number = 50;
   public isRandomMessageLength: boolean = false;
 
   private unsubscribe$ = new Subject<void>();
@@ -89,7 +89,7 @@ export class InformationValueModelComponent implements OnInit, OnDestroy {
         [Validators.required, Validators.min(0), Validators.max(1)]
       ),
       statesPercent: new FormControl(
-        { value: 25, disabled: true },
+        { value: 50, disabled: true },
         [Validators.required, Validators.min(1), Validators.max(100)]
       ),
       isRandomMessageLength: new FormControl({ value: false, disabled: false })
